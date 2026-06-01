@@ -1,1 +1,327 @@
 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friseur Bergemann – Digitale Stilberatung</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500;600&display=swap');
+    body { font-family: 'Jost', -apple-system, sans-serif; background: #F3F2EE; color: #15120F; }
+    .display { font-family: 'Cormorant Garamond', serif; }
+    .eyebrow { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 500; color: #6B655D; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useRef } = React;
+
+    // ── Icons fest eingebaut (keine externe Bibliothek mehr) ──
+    function Svg(props, children) {
+      return (
+        <svg width={props.size || 18} height={props.size || 18} viewBox="0 0 24 24"
+          fill={props.fill || "none"} stroke={props.color || "currentColor"}
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          {children}
+        </svg>
+      );
+    }
+    const ArrowRight = (p) => Svg(p, <g><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></g>);
+    const ArrowLeft = (p) => Svg(p, <g><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></g>);
+    const Check = (p) => Svg(p, <polyline points="20 6 9 17 4 12"/>);
+    const X = (p) => Svg(p, <g><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></g>);
+    const Upload = (p) => Svg(p, <g><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></g>);
+    const Heart = (p) => Svg(p, <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>);
+    const RotateCcw = (p) => Svg(p, <g><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></g>);
+    const Scissors = (p) => Svg(p, <g><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></g>);
+    const ShieldCheck = (p) => Svg(p, <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></g>);
+    const Camera = (p) => Svg(p, <g><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></g>);
+    const Sparkles = (p) => Svg(p, <path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/>);
+    const AlertCircle = (p) => Svg(p, <g><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></g>);
+    const CalendarCheck = (p) => Svg(p, <g><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></g>);
+    const MapPin = (p) => Svg(p, <g><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></g>);
+    const Phone = (p) => Svg(p, <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>);
+
+    const BACKEND_URL = "https://stilberatung-backend-production.up.railway.app/api/stilberatung";
+    const BOOKING_URL = "https://phorest.com/book/salons/friseurthomasbergemann";
+    const LOGO_URL = "https://friseur-bergemann.com/wp-content/uploads/2024/09/Friseur-Bergemann-Bochum-Logo-Weiss.webp";
+    const colors = { bg: "#F3F2EE", surface: "#FBFAF7", ink: "#15120F", inkSoft: "#6B655D", line: "#DCD7CD", hairline: "#C8C2B6" };
+
+    const QUESTIONS = [
+      { id: "laenge", label: "Wunschlänge", opts: ["Kürzer", "Ähnlich", "Länger"] },
+      { id: "stil", label: "Stilrichtung", opts: ["Klassisch", "Modern", "Natürlich", "Auffällig"] },
+      { id: "farbe", label: "Haarfarbe", opts: ["Beibehalten", "Wärmer", "Kühler", "Heller", "Dunkler", "Ganz neu"] },
+      { id: "anlass", label: "Anlass", opts: ["Alltag", "Business", "Besonderes Event"] },
+      { id: "pflege", label: "Pflegeaufwand", opts: ["Niedrig", "Mittel", "Hoch"] },
+    ];
+
+    function App() {
+      const [step, setStep] = useState("intro");
+      const [consent, setConsent] = useState({ verarbeitung: false, generierung: false, loeschung: false });
+      const [photos, setPhotos] = useState({ front: null, side: null });
+      const [answers, setAnswers] = useState({});
+      const [favorite, setFavorite] = useState(null);
+      const [results, setResults] = useState(null);
+      const [genError, setGenError] = useState(false);
+
+      const allConsent = consent.verarbeitung && consent.generierung && consent.loeschung;
+      const allPhotos = !!photos.front;
+      const allAnswers = QUESTIONS.every(q => answers[q.id]);
+
+      const reset = () => {
+        setStep("intro");
+        setConsent({ verarbeitung: false, generierung: false, loeschung: false });
+        setPhotos({ front: null, side: null });
+        setAnswers({}); setFavorite(null); setResults(null); setGenError(false);
+      };
+
+      const generate = async () => {
+        setGenError(false); setResults(null); setFavorite(null); setStep("processing");
+        if (BACKEND_URL && photos.front && photos.front.file) {
+          try {
+            const fd = new FormData();
+            fd.append("front", photos.front.file);
+            if (photos.side && photos.side.file) fd.append("side", photos.side.file);
+            fd.append("wishes", JSON.stringify(answers));
+            const res = await fetch(BACKEND_URL, { method: "POST", body: fd });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            setResults(Array.isArray(data.looks) ? data.looks : []);
+            setStep("results"); return;
+          } catch (e) {
+            console.error("Fehler:", e); setGenError(true); setStep("results"); return;
+          }
+        }
+        setTimeout(() => { setResults(null); setStep("results"); }, 2600);
+      };
+
+      return (
+        <div style={{ background: colors.bg, minHeight: "100vh", color: colors.ink }}>
+          <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px" }}>
+            <Header />
+            <div style={{ padding: "0 0 50px" }}>
+              {step === "intro" && <Intro onStart={() => setStep("consent")} />}
+              {step === "consent" && <Consent consent={consent} setConsent={setConsent} allConsent={allConsent} onBack={() => setStep("intro")} onNext={() => setStep("upload")} />}
+              {step === "upload" && <UploadStep photos={photos} setPhotos={setPhotos} allPhotos={allPhotos} onBack={() => setStep("consent")} onNext={() => setStep("quiz")} />}
+              {step === "quiz" && <Quiz answers={answers} setAnswers={setAnswers} allAnswers={allAnswers} onBack={() => setStep("upload")} onNext={generate} />}
+              {step === "processing" && <Processing />}
+              {step === "results" && <Results answers={answers} results={results} error={genError} onRetry={generate} favorite={favorite} setFavorite={setFavorite} onReset={reset} />}
+            </div>
+            <Footer />
+          </div>
+        </div>
+      );
+    }
+
+    function Header() {
+      const [logoOk, setLogoOk] = useState(true);
+      return (
+        <div style={{ background: colors.ink, padding: "30px 20px 26px", textAlign: "center", marginLeft: -20, marginRight: -20 }}>
+          {logoOk
+            ? <img src={LOGO_URL} alt="Friseur Bergemann" onError={() => setLogoOk(false)} style={{ height: 38, maxWidth: "72%", objectFit: "contain" }} />
+            : <div className="display" style={{ fontSize: 26, fontWeight: 500, letterSpacing: "1px", color: "#fff" }}>FRISEUR BERGEMANN</div>}
+          <div className="eyebrow" style={{ color: "rgba(255,255,255,.55)", marginTop: 11 }}>Bochum · Digitale Stilberatung</div>
+        </div>
+      );
+    }
+
+    function Btn({ children, onClick, disabled, variant, style }) {
+      const base = { fontFamily: "'Jost', sans-serif", fontWeight: 500, fontSize: 13.5, letterSpacing: "1.5px", textTransform: "uppercase", padding: "14px 26px", border: "none", cursor: disabled ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 9, opacity: disabled ? 0.35 : 1 };
+      const v = variant === "ghost" ? { background: "transparent", color: colors.inkSoft } : { background: colors.ink, color: "#fff" };
+      return <button onClick={disabled ? undefined : onClick} disabled={disabled} style={{ ...base, ...v, ...style }}>{children}</button>;
+    }
+
+    function Nav({ onBack, onNext, label, disabled }) {
+      return (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 30 }}>
+          <Btn variant="ghost" onClick={onBack}><ArrowLeft size={15} /> Zurück</Btn>
+          <Btn onClick={onNext} disabled={disabled}>{label} <ArrowRight size={15} /></Btn>
+        </div>
+      );
+    }
+
+    function Intro({ onStart }) {
+      return (
+        <div style={{ textAlign: "center", paddingTop: 52 }}>
+          <div className="eyebrow">Sieh deinen neuen Look — bevor die Schere ansetzt</div>
+          <h1 className="display" style={{ fontSize: 52, lineHeight: 1.05, fontWeight: 500, margin: "22px 0 0" }}>Schöne Haare<br />sind kein Zufall.</h1>
+          <div style={{ width: 44, height: 1, background: colors.hairline, margin: "26px auto" }} />
+          <p style={{ fontSize: 16, lineHeight: 1.65, color: colors.inkSoft, maxWidth: 440, margin: "0 auto" }}>
+            Lade ein Foto hoch, erzähl uns von deinen Wünschen — und erhalte drei persönliche Looks, abgestimmt auf deine Gesichtsform und deinen Typ.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 28, margin: "34px 0 30px", flexWrap: "wrap" }}>
+            {[["01", "Foto hoch"], ["02", "Wünsche wählen"], ["03", "3 Looks erhalten"]].map(([n, t]) => (
+              <div key={n} style={{ textAlign: "center" }}>
+                <div className="display" style={{ fontSize: 28, fontWeight: 500 }}>{n}</div>
+                <div className="eyebrow" style={{ marginTop: 4, fontSize: 10.5 }}>{t}</div>
+              </div>
+            ))}
+          </div>
+          <Btn onClick={onStart}>Beratung starten <ArrowRight size={16} /></Btn>
+        </div>
+      );
+    }
+
+    function Consent({ consent, setConsent, allConsent, onBack, onNext }) {
+      const items = [
+        { key: "verarbeitung", title: "Verarbeitung meines Fotos", text: "Mein Foto wird zur Analyse von Gesichtsform und Merkmalen verarbeitet (Art. 9 DSGVO)." },
+        { key: "generierung", title: "KI-Generierung", text: "Mein Foto wird an einen KI-Dienst übermittelt. Ergebnisse sind unverbindliche Vorschauen." },
+        { key: "loeschung", title: "Löschung & Freiwilligkeit", text: "Mein Foto wird nach der Generierung gelöscht. Die Nutzung ist freiwillig." },
+      ];
+      return (
+        <div style={{ paddingTop: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}><ShieldCheck size={16} color={colors.ink} /><span className="eyebrow">Datenschutz</span></div>
+          <h2 className="display" style={{ fontSize: 36, fontWeight: 500, margin: "0 0 18px" }}>Deine Einwilligung</h2>
+          {items.map(it => (
+            <label key={it.key} style={{ display: "flex", gap: 14, padding: "17px", marginBottom: 11, cursor: "pointer", background: colors.surface, border: "1px solid " + (consent[it.key] ? colors.ink : colors.line) }}>
+              <div style={{ width: 22, height: 22, minWidth: 22, marginTop: 1, background: consent[it.key] ? colors.ink : "transparent", border: "1px solid " + (consent[it.key] ? colors.ink : colors.hairline), display: "grid", placeItems: "center" }}>{consent[it.key] && <Check size={14} color="#fff" />}</div>
+              <input type="checkbox" checked={consent[it.key]} onChange={e => setConsent({ ...consent, [it.key]: e.target.checked })} style={{ display: "none" }} />
+              <div><div style={{ fontWeight: 500, fontSize: 14.5, marginBottom: 3 }}>{it.title}</div><div style={{ fontSize: 13, lineHeight: 1.5, color: colors.inkSoft }}>{it.text}</div></div>
+            </label>
+          ))}
+          <Nav onBack={onBack} onNext={onNext} label="Einverstanden" disabled={!allConsent} />
+        </div>
+      );
+    }
+
+    function UploadStep({ photos, setPhotos, allPhotos, onBack, onNext }) {
+      return (
+        <div style={{ paddingTop: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}><Camera size={16} color={colors.ink} /><span className="eyebrow">Schritt 1 von 2</span></div>
+          <h2 className="display" style={{ fontSize: 36, fontWeight: 500, margin: "0 0 18px" }}>Deine Fotos</h2>
+          <p style={{ fontSize: 14.5, color: colors.inkSoft, marginBottom: 24 }}>Ein Frontalbild ist Pflicht. Gleichmäßiges Licht, Haare frei sichtbar.</p>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <Slot label="Frontal" required value={photos.front} onChange={v => setPhotos({ ...photos, front: v })} />
+            <Slot label="Seitlich" value={photos.side} onChange={v => setPhotos({ ...photos, side: v })} />
+          </div>
+          <Nav onBack={onBack} onNext={onNext} label="Weiter" disabled={!allPhotos} />
+        </div>
+      );
+    }
+
+    function Slot({ label, required, value, onChange }) {
+      const ref = useRef();
+      const onFile = e => { const f = e.target.files && e.target.files[0]; if (f) onChange({ url: URL.createObjectURL(f), file: f }); };
+      return (
+        <div style={{ flex: "1 1 200px" }}>
+          <div onClick={() => ref.current.click()} style={{ position: "relative", aspectRatio: "3/4", cursor: "pointer", overflow: "hidden", border: "1px " + (value ? "solid " + colors.ink : "dashed " + colors.hairline), background: value ? "#000" : colors.surface, display: "grid", placeItems: "center" }}>
+            {value ? (
+              <React.Fragment>
+                <img src={value.url} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: .9 }} />
+                <div onClick={e => { e.stopPropagation(); onChange(null); }} style={{ position: "absolute", top: 10, right: 10, width: 28, height: 28, background: "rgba(0,0,0,.6)", display: "grid", placeItems: "center" }}><X size={15} color="#fff" /></div>
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: colors.ink, color: "#fff", padding: "8px 12px", fontSize: 10.5, letterSpacing: "1px", textTransform: "uppercase", display: "flex", gap: 6, alignItems: "center" }}><Check size={12} color="#fff" /> {label}</div>
+              </React.Fragment>
+            ) : (
+              <div style={{ textAlign: "center", color: colors.inkSoft }}>
+                <Upload size={24} color={colors.ink} />
+                <div style={{ fontWeight: 500, fontSize: 15, marginTop: 10 }}>{label}{required ? " *" : ""}</div>
+                <div style={{ fontSize: 12, marginTop: 3 }}>Tippen zum Hochladen</div>
+              </div>
+            )}
+          </div>
+          <input ref={ref} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
+        </div>
+      );
+    }
+
+    function Quiz({ answers, setAnswers, allAnswers, onBack, onNext }) {
+      return (
+        <div style={{ paddingTop: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}><Sparkles size={16} color={colors.ink} /><span className="eyebrow">Schritt 2 von 2</span></div>
+          <h2 className="display" style={{ fontSize: 36, fontWeight: 500, margin: "0 0 18px" }}>Deine Wünsche</h2>
+          {QUESTIONS.map(q => (
+            <div key={q.id} style={{ marginBottom: 22 }}>
+              <div className="eyebrow" style={{ marginBottom: 11 }}>{q.label}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {q.opts.map(o => {
+                  const on = answers[q.id] === o;
+                  return <button key={o} onClick={() => setAnswers({ ...answers, [q.id]: o })} style={{ fontFamily: "'Jost', sans-serif", fontSize: 13.5, padding: "10px 17px", cursor: "pointer", background: on ? colors.ink : colors.surface, color: on ? "#fff" : colors.ink, border: "1px solid " + (on ? colors.ink : colors.line) }}>{o}</button>;
+                })}
+              </div>
+            </div>
+          ))}
+          <Nav onBack={onBack} onNext={onNext} label="Looks generieren" disabled={!allAnswers} />
+        </div>
+      );
+    }
+
+    function Processing() {
+      return (
+        <div style={{ paddingTop: 100, textAlign: "center" }}>
+          <div style={{ width: 58, height: 58, margin: "0 auto", border: "1px solid " + colors.line, borderTopColor: colors.ink, borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+          <h2 className="display" style={{ fontSize: 30, fontWeight: 500, marginTop: 30 }}>Wir gestalten deine Looks …</h2>
+          <p style={{ fontSize: 14, color: colors.inkSoft, marginTop: 10 }}>Bitte einen Moment Geduld.</p>
+        </div>
+      );
+    }
+
+    function Results({ answers, results, error, onRetry, favorite, setFavorite, onReset }) {
+      const real = Array.isArray(results) && results.length > 0;
+      const bgs = ["linear-gradient(155deg,#2b2b2b,#555)", "linear-gradient(155deg,#3a3531,#8a8178)", "linear-gradient(155deg,#1f1f1f,#444)"];
+      const meta = [
+        { name: answers.stil === "Auffällig" ? "Statement Cut" : "Soft Classic", desc: (answers.laenge || "Ähnliche") + " Länge, " + (answers.stil || "moderner") + " Stil" },
+        { name: answers.anlass === "Business" ? "Clean & Sharp" : "Effortless Texture", desc: "Farbe: " + (answers.farbe || "wie gehabt") },
+        { name: answers.farbe === "Ganz neu" ? "Bold Refresh" : "Natural Refine", desc: "Pflege: " + (answers.pflege || "mittel") },
+      ];
+      if (error) {
+        return (
+          <div style={{ paddingTop: 60, textAlign: "center" }}>
+            <AlertCircle size={34} color={colors.ink} />
+            <h2 className="display" style={{ fontSize: 30, fontWeight: 500, margin: "16px 0 6px" }}>Das hat nicht geklappt</h2>
+            <p style={{ fontSize: 14, color: colors.inkSoft, marginBottom: 24 }}>Bitte versuche es noch einmal.</p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <Btn onClick={onRetry}><RotateCcw size={15} color="#fff" /> Erneut</Btn>
+              <Btn variant="ghost" onClick={onReset}>Neu starten</Btn>
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div style={{ paddingTop: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}><Heart size={16} color={colors.ink} /><span className="eyebrow">Deine Vorschläge</span></div>
+          <h2 className="display" style={{ fontSize: 36, fontWeight: 500, margin: "0 0 14px" }}>Drei Looks für dich</h2>
+          {!real && <div style={{ fontSize: 11.5, color: colors.inkSoft, background: colors.surface, border: "1px solid " + colors.line, padding: "9px 13px", marginBottom: 22 }}>Hinweis: Hier stehen Platzhalter. Echte Fotos kommen vom Backend.</div>}
+          <div style={{ display: "grid", gap: 12 }}>
+            {meta.map((l, i) => {
+              const on = favorite === i;
+              return (
+                <div key={i} style={{ display: "flex", gap: 15, padding: 13, background: colors.surface, border: "1px solid " + (on ? colors.ink : colors.line) }}>
+                  <div style={{ width: 92, flexShrink: 0, aspectRatio: "3/4", overflow: "hidden", background: (real && results[i]) ? "#000" : bgs[i], display: "grid", placeItems: "center" }}>
+                    {real && results[i] ? <img src={results[i]} alt={l.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Scissors size={20} color="rgba(255,255,255,.8)" />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="display" style={{ fontSize: 23, fontWeight: 500 }}>{l.name}</div>
+                    <div style={{ fontSize: 12.5, color: colors.inkSoft, lineHeight: 1.5, margin: "6px 0 12px" }}>{l.desc}</div>
+                    <button onClick={() => setFavorite(on ? null : i)} style={{ fontSize: 10.5, letterSpacing: "1px", textTransform: "uppercase", fontWeight: 500, padding: "8px 15px", cursor: "pointer", border: "1px solid " + colors.ink, background: on ? colors.ink : "transparent", color: on ? "#fff" : colors.ink, display: "inline-flex", alignItems: "center", gap: 7 }}><Heart size={12} fill={on ? "#fff" : "none"} color={on ? "#fff" : colors.ink} /> {on ? "Favorit" : "Gefällt mir"}</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
+            <Btn onClick={() => window.open(BOOKING_URL, "_blank")} disabled={favorite === null} style={{ flex: "1 1 auto", justifyContent: "center" }}><CalendarCheck size={16} color="#fff" /> Zum Termin</Btn>
+            <Btn variant="ghost" onClick={onReset}><RotateCcw size={14} /> Neu</Btn>
+          </div>
+        </div>
+      );
+    }
+
+    function Footer() {
+      return (
+        <div style={{ borderTop: "1px solid " + colors.line, padding: "26px 0 30px", fontSize: 12.5, color: colors.inkSoft, lineHeight: 1.6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}><MapPin size={13} /> Riemker Straße 13–15, 44809 Bochum</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 5 }}><Phone size={13} /> 0234 9041390</div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
